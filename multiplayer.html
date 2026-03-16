@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>⚡ 天赫气死你 - 精英版</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background: #000;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Rajdhani', sans-serif;
+            overflow: hidden;
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 900px;
+            padding: 20px;
+        }
+        
+        .screen.active { display: flex; }
+
+        .login-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(ellipse at 20% 80%, rgba(120, 0, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(0, 200, 255, 0.1) 0%, transparent 50%),
+                linear-gradient(180deg, #0a0a12 0%, #12121f 50%, #0a0a12 100%);
+            z-index: -1;
+        }
+
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 48px;
+            font-weight: 900;
+            background: linear-gradient(90deg, #00f7ff, #ff00ff, #00f7ff);
+            background-size: 200% 100%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: neonFlow 3s linear infinite;
+            text-shadow: 0 0 40px rgba(0, 247, 255, 0.5);
+            margin-bottom: 10px;
+        }
+
+        @keyframes neonFlow {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+
+        .subtitle {
+            color: rgba(255,255,255,0.5);
+            font-size: 14px;
+            letter-spacing: 8px;
+            margin-bottom: 40px;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        input {
+            width: 300px;
+            padding: 15px 25px;
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(0, 247, 255, 0.3);
+            border-radius: 30px;
+            color: #fff;
+            font-size: 16px;
+            font-family: 'Rajdhani', sans-serif;
+            text-align: center;
+            transition: all 0.3s;
+        }
+        
+        input::placeholder { color: rgba(255,255,255,0.3); }
+        input:focus { 
+            outline: none; 
+            border-color: #00f7ff; 
+            box-shadow: 0 0 30px rgba(0, 247, 255, 0.3);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #00f7ff, #0080ff);
+            border: none;
+            padding: 15px 50px;
+            margin: 8px;
+            font-size: 16px;
+            font-family: 'Orbitron', sans-serif;
+            color: #000;
+            font-weight: 700;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 40px rgba(0, 247, 255, 0.6);
+        }
+
+        .btn.secondary {
+            background: linear-gradient(135deg, #ff00ff, #8000ff);
+            color: #fff;
+        }
+
+        #gameScreen {
+            padding: 0;
+            position: relative;
+        }
+        
+        #gameCanvas {
+            background: #050510;
+            border-radius: 10px;
+            box-shadow: 
+                0 0 60px rgba(0, 247, 255, 0.2),
+                0 0 100px rgba(255, 0, 255, 0.1),
+                inset 0 0 100px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(0, 247, 255, 0.3);
+            cursor: crosshair;
+        }
+
+        .hud {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+        }
+
+        .hud-panel {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 12px 20px;
+            border-radius: 10px;
+            border: 1px solid rgba(0, 247, 255, 0.3);
+        }
+
+        .hud-label {
+            font-size: 10px;
+            color: rgba(255,255,255,0.5);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .hud-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #00f7ff;
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .hp-bar {
+            width: 150px;
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+
+        .hp-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00f7ff);
+            border-radius: 4px;
+            transition: width 0.3s;
+            box-shadow: 0 0 10px #00ff88;
+        }
+
+        .players-panel {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 0, 255, 0.3);
+            min-width: 150px;
+        }
+
+        .player-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 8px 0;
+            font-size: 14px;
+        }
+
+        .player-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            box-shadow: 0 0 10px currentColor;
+        }
+
+        .waiting-msg {
+            color: rgba(255,255,255,0.6);
+            font-size: 18px;
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .tips {
+            color: rgba(255,255,255,0.4);
+            font-size: 12px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .message-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid #00f7ff;
+            padding: 30px 50px;
+            border-radius: 20px;
+            color: #fff;
+            font-size: 24px;
+            font-family: 'Orbitron', sans-serif;
+            z-index: 100;
+            display: none;
+            text-align: center;
+            box-shadow: 0 0 60px rgba(0, 247, 255, 0.5);
+        }
+
+        .message-popup.show { display: block; }
+        
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-family: 'Rajdhani', sans-serif;
+            z-index: 50;
+            transition: all 0.3s;
+        }
+        
+        .back-btn:hover {
+            background: rgba(255,255,255,0.2);
+        }
+    </style>
+</head>
+<body>
+    <button class="back-btn" onclick="window.location.href='/'">← 返回大厅</button>
+    <div class="login-bg"></div>
+    <div class="stars" id="stars"></div>
+
+    <div class="screen active" id="loginScreen">
+        <h1>⚡ 天赫气死你</h1>
+        <p class="subtitle">ELITE EDITION</p>
+        
+        <div class="input-group">
+            <input type="text" id="playerName" placeholder="输入你的名字" maxlength="12">
+            <input type="text" id="roomName" placeholder="房间名称" maxlength="15">
+        </div>
+        
+        <button class="btn" onclick="createRoom()">创建房间</button>
+        <button class="btn secondary" onclick="joinRoom()">加入房间</button>
+        
+        <p class="tips">🎮 鼠标瞄准射击 | 击杀敌人得分 | 组队挑战Boss</p>
+    </div>
+
+    <div class="screen" id="waitScreen">
+        <h1>⚡ 房间等待中</h1>
+        <p class="subtitle" id="waitRoomName">ROOM</p>
+        
+        <div class="waiting-msg" id="playerList">等待玩家加入...</div>
+        
+        <button class="btn" id="startBtn" onclick="startGame()">开始游戏</button>
+        <button class="btn secondary" onclick="leaveRoom()">退出房间</button>
+    </div>
+
+    <div class="screen" id="gameScreen">
+        <canvas id="gameCanvas" width="900" height="650"></canvas>
+        
+        <div class="hud">
+            <div class="hud-panel">
+                <div class="hud-label">分数</div>
+                <div class="hud-value" id="score">0</div>
+            </div>
+            <div class="hud-panel">
+                <div class="hud-label">生命</div>
+                <div class="hp-bar">
+                    <div class="hp-fill" id="hpFill" style="width: 100%"></div>
+                </div>
+            </div>
+            <div class="hud-panel">
+                <div class="hud-label">波次</div>
+                <div class="hud-value" id="wave">1</div>
+            </div>
+        </div>
+        
+        <div class="players-panel" id="playersPanel">
+            <div class="hud-label" style="margin-bottom:10px;">玩家</div>
+            <div id="playersList"></div>
+        </div>
+    </div>
+
+    <div class="message-popup" id="messagePopup"></div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        function createStars() {
+            const container = document.getElementById('stars');
+            for (let i = 0; i < 150; i++) {
+                const star = document.createElement('div');
+                star.style.cssText = `
+                    position: absolute;
+                    left: ${Math.random() * 100}%;
+                    top: ${Math.random() * 100}%;
+                    width: ${Math.random() * 2 + 1}px;
+                    height: ${Math.random() * 2 + 1}px;
+                    background: #fff;
+                    border-radius: 50%;
+                    animation: twinkle ${Math.random() * 3 + 2}s ease-in-out infinite;
+                    animation-delay: ${Math.random() * 2}s;
+                `;
+                container.appendChild(star);
+            }
+        }
+        createStars();
+
+        const socket = io();
+        
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        let myId = null;
+        let playerName = '';
+        let roomName = '';
+        let isPlaying = false;
+        
+        let mouseX = 450, mouseY = 550;
+        let shooting = false;
+        let keys = {};
+        
+        let players = [];
+        let enemies = [];
+        let bullets = [];
+        let enemyBullets = [];
+        let particles = [];
+        let myData = null;
+
+        class Particle {
+            constructor(x, y, color, size, vx, vy, life) {
+                this.x = x; this.y = y; this.color = color;
+                this.size = size; this.vx = vx; this.vy = vy;
+                this.life = life; this.maxLife = life;
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy;
+                this.vy += 0.1;
+                this.life--;
+                return this.life > 0;
+            }
+            draw() {
+                const alpha = this.life / this.maxLife;
+                ctx.globalAlpha = alpha;
+                ctx.fillStyle = this.color;
+                ctx.shadowColor = this.color;
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size * alpha, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        function createExplosion(x, y, color, count = 15) {
+            for (let i = 0; i < count; i++) {
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 5 + 2;
+                particles.push(new Particle(
+                    x, y, color,
+                    Math.random() * 4 + 2,
+                    Math.cos(angle) * speed,
+                    Math.sin(angle) * speed,
+                    30 + Math.random() * 20
+                ));
+            }
+        }
+
+        function showMessage(text, duration = 3000) {
+            const popup = document.getElementById('messagePopup');
+            popup.textContent = text;
+            popup.classList.add('show');
+            setTimeout(() => popup.classList.remove('show'), duration);
+        }
+
+        function showScreen(name) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(name + 'Screen').classList.add('active');
+        }
+
+        function createRoom() {
+            playerName = document.getElementById('playerName').value.trim() || '玩家';
+            roomName = document.getElementById('roomName').value.trim() || '房间' + Math.floor(Math.random() * 1000);
+            
+            socket.emit('createRoom', roomName, playerName, (res) => {
+                if (res.success) {
+                    myId = res.playerId;
+                    showScreen('wait');
+                    document.getElementById('waitRoomName').textContent = 'ROOM: ' + roomName;
+                } else {
+                    showMessage(res.message);
+                }
+            });
+        }
+
+        function joinRoom() {
+            playerName = document.getElementById('playerName').value.trim() || '玩家';
+            roomName = document.getElementById('roomName').value.trim();
+            
+            if (!roomName) { showMessage('请输入房间名'); return; }
+            
+            socket.emit('joinRoom', roomName, playerName, (res) => {
+                if (res.success) {
+                    myId = res.playerId;
+                    showScreen('wait');
+                    document.getElementById('waitRoomName').textContent = 'ROOM: ' + roomName;
+                } else {
+                    showMessage(res.message);
+                }
+            });
+        }
+
+        function startGame() {
+            socket.emit('startGame', (res) => {
+                if (!res.success) showMessage(res.message);
+            });
+        }
+
+        function leaveRoom() {
+            window.location.href = '/';
+        }
+
+        socket.on('playerJoined', (player) => {
+            document.getElementById('playerList').textContent = '玩家已加入，等待开始...';
+        });
+
+        socket.on('playerLeft', (id) => {
+            showMessage('玩家离开');
+        });
+
+        socket.on('gameStart', () => {
+            showScreen('game');
+            isPlaying = true;
+        });
+
+        socket.on('gameState', (state) => {
+            players = state.players;
+            enemies = state.enemies;
+            bullets = state.bullets;
+            enemyBullets = state.enemyBullets;
+            
+            myData = players.find(p => p.id === myId);
+            if (myData) {
+                document.getElementById('score').textContent = myData.score;
+                document.getElementById('hpFill').style.width = myData.hp + '%';
+            }
+            
+            document.getElementById('wave').textContent = state.wave || 1;
+            
+            updatePlayersList();
+            
+            draw();
+        });
+
+        socket.on('gameEnded', (msg) => {
+            isPlaying = false;
+            showMessage(msg, 5000);
+            setTimeout(() => window.location.href = '/', 5000);
+        });
+
+        socket.on('died', () => {
+            isPlaying = false;
+            showMessage('💀 你已阵亡!', 5000);
+            setTimeout(() => window.location.href = '/', 5000);
+        });
+
+        function updatePlayersList() {
+            const list = document.getElementById('playersList');
+            list.innerHTML = players.map(p => `
+                <div class="player-row">
+                    <div class="player-dot" style="background:${p.color}; color:${p.color}"></div>
+                    <span style="color:${p.id === myId ? '#00f7ff' : '#fff'}">${p.name}</span>
+                    <span style="margin-left:auto;color:${p.hp > 30 ? '#00ff88' : '#ff4444'}">${p.hp}%</span>
+                </div>
+            `).join('');
+        }
+
+        function sendInput() {
+            if (!isPlaying) return;
+            socket.emit('input', { x: mouseX, y: mouseY, shooting });
+        }
+
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = e.clientX - rect.left;
+            mouseY = e.clientY - rect.top;
+            sendInput();
+        });
+
+        canvas.addEventListener('mousedown', () => { shooting = true; sendInput(); });
+        canvas.addEventListener('mouseup', () => { shooting = false; sendInput(); });
+        
+        document.addEventListener('keydown', (e) => {
+            keys[e.code] = true;
+            if (e.code === 'Space') { shooting = true; sendInput(); }
+        });
+        document.addEventListener('keyup', (e) => {
+            keys[e.code] = false;
+            if (e.code === 'Space') { shooting = false; sendInput(); }
+        });
+
+        function draw() {
+            ctx.fillStyle = '#050510';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.fillStyle = '#fff';
+            for (let i = 0; i < 80; i++) {
+                const x = (i * 137) % canvas.width;
+                const y = (i * 89 + Date.now() / 30) % canvas.height;
+                ctx.globalAlpha = 0.4;
+                ctx.beginPath();
+                ctx.arc(x, y, 1, 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+
+            enemies.forEach(e => {
+                ctx.save();
+                ctx.translate(e.x, e.y);
+                ctx.shadowColor = e.color;
+                ctx.shadowBlur = 20;
+                ctx.fillStyle = e.color;
+                ctx.beginPath();
+                ctx.moveTo(0, e.size/2 + 5);
+                ctx.lineTo(-e.size/2, -e.size/2);
+                ctx.lineTo(e.size/2, -e.size/2);
+                ctx.closePath();
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = 'rgba(255,255,255,0.5)';
+                ctx.beginPath();
+                ctx.arc(0, 0, e.size/4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+
+            bullets.forEach(b => {
+                ctx.save();
+                ctx.shadowColor = b.color || '#00f7ff';
+                ctx.shadowBlur = 15;
+                ctx.fillStyle = b.color || '#00f7ff';
+                if (b.isLaser) {
+                    ctx.fillRect(b.x - 2, b.y, 4, 25);
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(b.x, b.y, 6, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.restore();
+            });
+
+            enemyBullets.forEach(b => {
+                ctx.save();
+                ctx.shadowColor = b.color;
+                ctx.shadowBlur = 12;
+                ctx.fillStyle = b.color;
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, 7, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(b.x, b.y, 3, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            });
+
+            players.forEach(p => {
+                if (p.hp <= 0) return;
+                
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.shadowColor = p.color;
+                ctx.shadowBlur = 25;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.moveTo(0, -30);
+                ctx.lineTo(-20, 25);
+                ctx.lineTo(-8, 15);
+                ctx.lineTo(0, 20);
+                ctx.lineTo(8, 15);
+                ctx.lineTo(20, 25);
+                ctx.closePath();
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(0, -8, 8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#ff6600';
+                const flameLen = 15 + Math.random() * 10;
+                ctx.beginPath();
+                ctx.moveTo(-10, 20);
+                ctx.lineTo(0, 20 + flameLen);
+                ctx.lineTo(10, 20);
+                ctx.closePath();
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#fff';
+                ctx.font = '12px Rajdhani';
+                ctx.textAlign = 'center';
+                ctx.fillText(p.name, 0, 45);
+                ctx.fillStyle = '#333';
+                ctx.fillRect(-25, 52, 50, 5);
+                ctx.fillStyle = p.hp > 30 ? '#00ff88' : '#ff4444';
+                ctx.fillRect(-25, 52, 50 * (p.hp/100), 5);
+                ctx.restore();
+            });
+
+            particles = particles.filter(p => {
+                p.draw();
+                return p.update();
+            });
+        }
+    </script>
+</body>
+</html>

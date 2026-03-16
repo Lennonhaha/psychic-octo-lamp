@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>时空裂缝</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0a0a1a;
+            color: #fff;
+            font-family: 'Segoe UI', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+        }
+        #game {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+        .裂缝 {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #ff00ff 0%, #440044 70%, transparent 100%);
+            box-shadow: 0 0 20px #ff00ff, 0 0 40px #ff00ff;
+            animation: pulse 0.8s infinite;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .裂缝:hover { transform: scale(1.2); }
+        .裂缝.大 {
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, #00ffff 0%, #004444 70%, transparent 100%);
+            box-shadow: 0 0 30px #00ffff, 0 0 60px #00ffff;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+        }
+        #ui {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            font-size: 18px;
+        }
+        #ui div { margin-bottom: 8px; text-shadow: 0 0 10px #000; }
+        #score { color: #00ff00; font-size: 24px; font-weight: bold; }
+        #level { color: #ffff00; }
+        #event-box {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(20, 20, 40, 0.95);
+            border: 2px solid #ff00ff;
+            border-radius: 15px;
+            padding: 20px;
+            max-width: 400px;
+            display: none;
+            z-index: 200;
+            box-shadow: 0 0 30px rgba(255,0,255,0.5);
+        }
+        #event-box h3 { color: #ff00ff; margin-bottom: 15px; }
+        #event-box p { margin-bottom: 15px; line-height: 1.6; }
+        .btn {
+            background: linear-gradient(135deg, #ff00ff, #880088);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: transform 0.2s;
+        }
+        .btn:hover { transform: scale(1.05); }
+        #start-screen {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(10,10,26,0.98);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+        }
+        #start-screen h1 {
+            font-size: 60px;
+            background: linear-gradient(90deg, #ff00ff, #00ffff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+        }
+        #start-screen p { color: #888; margin-bottom: 40px; }
+        #start-btn {
+            padding: 15px 50px;
+            font-size: 24px;
+            background: linear-gradient(135deg, #ff00ff, #00ffff);
+            border: none;
+            border-radius: 30px;
+            color: white;
+            cursor: pointer;
+            animation: glow 2s infinite;
+        }
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 20px #ff00ff; }
+            50% { box-shadow: 0 0 40px #00ffff; }
+        }
+        .explosion {
+            position: absolute;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #fff 0%, #ff00ff 50%, transparent 70%);
+            animation: explode 0.3s forwards;
+            pointer-events: none;
+        }
+        @keyframes explode {
+            0% { transform: scale(0); opacity: 1; }
+            100% { transform: scale(2); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div id="start-screen">
+        <h1>🌀 时空裂缝</h1>
+        <p>点击裂缝，阻止它们吞噬世界！</p>
+        <button id="start-btn">开始游戏</button>
+    </div>
+
+    <div id="game" style="display:none;">
+        <div id="ui">
+            <div>分数: <span id="score">0</span></div>
+            <div>等级: <span id="level">1</span></div>
+            <div>生命: <span id="hp">❤️❤️❤️</span></div>
+        </div>
+        <div id="event-box">
+            <h3 id="event-title"></h3>
+            <p id="event-desc"></p>
+            <div id="event-btns"></div>
+        </div>
+    </div>
+
+    <script>
+        const 游戏 = {
+            分数: 0,
+            等级: 1,
+            生命: 3,
+            运行时: false,
+            裂缝们: [],
+            事件计数: 0,
+            技能: ['徒手点击'],
+            
+            事件库: [
+                {
+                    标题: '🧙 神秘老人',
+                    描述: '一个白胡子老人出现，递给你一根法杖：\n"年轻人，这能帮你更好地封印裂缝。"',
+                    选项: [
+                        { 文本: '接受法杖 (+2伤害)', 效果: () => { this.技能.push('法杖'); this.分数 += 50; } },
+                        { 文本: '婉拒，继续修炼', 效果: () => { this.分数 += 20; } }
+                    ]
+                },
+                {
+                    标题: '⚡ 闪电裂缝',
+                    描述: '一个不稳定的裂缝正在泄露电能！它会波及周围。',
+                    选项: [
+                        { 文本: '优先封印它！', 效果: () => { this.分数 += 100; } },
+                        { 文本: '让队友去处理', 效果: () => { this.生命--; 更新UI(); } }
+                    ]
+                },
+                {
+                    标题: '🎁 时空宝箱',
+                    描述: '你发现了一个散落的时空宝箱！',
+                    选项: [
+                        { 文本: '打开它', 效果: () => { 
+                            const r = Math.random();
+                            if(r < 0.5) { this.分数 += 200; alert('🎉 获得200分！'); }
+                            else { this.生命--; alert('💀 是陷阱！损失1生命'); }
+                            更新UI();
+                        }},
+                        { 文本: '不碰为妙', 效果: () => {} }
+                    ]
+                },
+                {
+                    标题: '🌀 黑洞来袭',
+                    描述: '一个巨大的黑洞正在形成，吸走周围的一切！',
+                    选项: [
+                        { 文本: '全力封印', 效果: () => { this.分数 += 150; this.技能.push('时空刃'); } },
+                        { 文本: '暂避锋芒', 效果: () => { this.生命--; 更新UI(); } }
+                    ]
+                }
+            ]
+        };
+
+        function 更新UI() {
+            document.getElementById('score').textContent = 游戏.分数;
+            document.getElementById('level').textContent = 游戏.等级;
+            document.getElementById('hp').textContent = '❤️'.repeat(Math.max(0, 游戏.生命));
+            
+            if (游戏.生命 <= 0) 游戏结束();
+        }
+
+        function 生成裂缝() {
+            if (!游戏.运行时) return;
+            
+            const game = document.getElementById('game');
+            const 裂缝 = document.createElement('div');
+            裂缝.className = '裂缝' + (Math.random() > 0.8 ? ' 大' : '');
+            
+            const x = Math.random() * (window.innerWidth - 80);
+            const y = Math.random() * (window.innerHeight - 80) + 50;
+            裂缝.style.left = x + 'px';
+            裂缝.style.top = y + 'px';
+            
+            const 是大 = 裂缝.classList.contains('大');
+            const 生命值 = 是大 ? 3 : 1;
+            
+            裂缝.dataset.生命 = 生命值;
+            
+            裂缝.onclick = () => {
+                const 当前生命 = parseInt(裂缝.dataset.生命) - 1;
+                裂缝.dataset.生命 = 当前生命;
+                
+                if (当前生命 <= 0) {
+                    爆炸效果(x, y);
+                    裂缝.remove();
+                    游戏.分数 += 是大 ? 30 : 10;
+                    if (游戏.分数 >= 游戏.等级 * 200) {
+                        游戏.等级++;
+                        游戏.技能.push(['法杖', '时空刃', '黑洞制造者'][Math.min(游戏.等级-2, 2)] || '徒手点击');
+                    }
+                    更新UI();
+                } else {
+                    裂缝.style.transform = 'scale(0.8)';
+                    setTimeout(() => 裂缝.style.transform = 'scale(1)', 100);
+                }
+            };
+            
+            game.appendChild(裂缝);
+            
+            // 自动消失扣血
+            setTimeout(() => {
+                if (裂缝.parentNode) {
+                    裂缝.remove();
+                    游戏.生命--;
+                    更新UI();
+                }
+            }, 是大 ? 4000 : 6000);
+        }
+
+        function 爆炸效果(x, y) {
+            const game = document.getElementById('game');
+            const exp = document.createElement('div');
+            exp.className = 'explosion';
+            exp.style.left = (x - 10) + 'px';
+            exp.style.top = (y - 10) + 'px';
+            game.appendChild(exp);
+            setTimeout(() => exp.remove(), 300);
+        }
+
+        function 触发事件() {
+            const 事件 = 游戏.事件库[Math.floor(Math.random() * 游戏.事件库.length)];
+            const box = document.getElementById('event-box');
+            const btns = document.getElementById('event-btns');
+            
+            document.getElementById('event-title').textContent = 事件.标题;
+            document.getElementById('event-desc').textContent = 事件.描述;
+            btns.innerHTML = '';
+            
+            事件.选项.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.className = 'btn';
+                btn.textContent = opt.文本;
+                btn.onclick = () => {
+                    opt.效果.call(游戏);
+                    box.style.display = 'none';
+                };
+                btns.appendChild(btn);
+            });
+            
+            box.style.display = 'block';
+        }
+
+        function 游戏结束() {
+            游戏.运行时 = false;
+            alert(`游戏结束！\n最终分数: ${游戏.分数}\n达到等级: ${游戏.等级}`);
+            location.reload();
+        }
+
+        function 开始游戏() {
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('game').style.display = 'block';
+            游戏.运行时 = true;
+            
+            // 主循环
+            setInterval(() => {
+                if (游戏.运行时 && Math.random() > 0.3) 生成裂缝();
+            }, 800);
+            
+            // 事件循环
+            setInterval(() => {
+                if (游戏.运行时) {
+                    游戏.事件计数++;
+                    if (游戏.事件计数 >= 8) {
+                        游戏.事件计数 = 0;
+                        触发事件();
+                    }
+                }
+            }, 2000);
+        }
+
+        document.getElementById('start-btn').onclick = 开始游戏;
+    </script>
+</body>
+</html>

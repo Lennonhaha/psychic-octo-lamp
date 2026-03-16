@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 游戏大厅</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #00f7ff;
+            --secondary: #ff00ff;
+            --bg-dark: #0a0a12;
+            --bg-card: #12121f;
+            --text: #fff;
+            --text-dim: #888;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: 
+                radial-gradient(ellipse at 20% 20%, rgba(0, 247, 255, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(255, 0, 255, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(0, 100, 255, 0.05) 0%, transparent 70%),
+                var(--bg-dark);
+        }
+
+        .stars {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        .star {
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+            animation: twinkle 3s ease-in-out infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+
+        header {
+            padding: 30px 50px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            backdrop-filter: blur(10px);
+            background: rgba(10, 10, 18, 0.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 28px;
+            font-weight: 900;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 2px;
+        }
+
+        .header-links {
+            display: flex;
+            gap: 30px;
+        }
+
+        .header-links a {
+            color: var(--text-dim);
+            text-decoration: none;
+            font-size: 14px;
+            transition: color 0.3s;
+        }
+
+        .header-links a:hover {
+            color: var(--primary);
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 60px 30px;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .hero h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 48px;
+            font-weight: 900;
+            margin-bottom: 15px;
+            background: linear-gradient(90deg, #fff, var(--primary), #fff);
+            background-size: 200% 100%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: shine 4s linear infinite;
+        }
+
+        @keyframes shine {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .hero p {
+            color: var(--text-dim);
+            font-size: 18px;
+            font-weight: 300;
+        }
+
+        .games-section h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 24px;
+            margin-bottom: 30px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .games-section h2::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 30px;
+        }
+
+        .game-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .game-card:hover {
+            transform: translateY(-10px);
+            border-color: rgba(0, 247, 255, 0.3);
+            box-shadow: 0 20px 60px rgba(0, 247, 255, 0.15);
+        }
+
+        .game-card:hover::before {
+            opacity: 1;
+        }
+
+        .card-preview {
+            height: 180px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-preview.game-1 {
+            background: linear-gradient(135deg, #1a0a2e 0%, #0a1a2e 100%);
+        }
+
+        .card-preview.game-2 {
+            background: linear-gradient(135deg, #0a1a2e 0%, #1a0a2e 100%);
+        }
+
+        .card-icon {
+            font-size: 64px;
+            filter: drop-shadow(0 0 20px currentColor);
+        }
+
+        .game-1 .card-icon { color: #ff00ff; }
+        .game-2 .card-icon { color: #00f7ff; }
+
+        .card-content {
+            padding: 25px;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title .tag {
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-weight: 500;
+        }
+
+        .tag-single { background: rgba(0, 247, 255, 0.2); color: var(--primary); }
+        .tag-multi { background: rgba(255, 0, 255, 0.2); color: var(--secondary); }
+
+        .card-desc {
+            color: var(--text-dim);
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .card-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .play-btn {
+            background: linear-gradient(135deg, var(--primary), #0080ff);
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            color: #000;
+            font-weight: 700;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+
+        .play-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(0, 247, 255, 0.5);
+        }
+
+        .game-2 .play-btn {
+            background: linear-gradient(135deg, var(--secondary), #8000ff);
+            color: #fff;
+        }
+
+        .card-stats {
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+            color: var(--text-dim);
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .card-preview .card-icon {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-dim);
+            font-size: 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            margin-top: 60px;
+        }
+
+        @media (max-width: 768px) {
+            header {
+                padding: 20px;
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .hero h1 {
+                font-size: 32px;
+            }
+
+            .games-grid {
+                grid-template-columns: 1fr;
+            }
+
+            main {
+                padding: 40px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg"></div>
+    <div class="stars" id="stars"></div>
+
+    <header>
+        <div class="logo">🎮 游戏大厅</div>
+        <div class="header-links">
+            <a href="/">首页</a>
+            <a href="#">游戏</a>
+            <a href="#">关于</a>
+        </div>
+    </header>
+
+    <main>
+        <div class="hero">
+            <h1>欢迎来到游戏世界</h1>
+            <p>精选好游戏，随时畅玩</p>
+        </div>
+
+        <section class="games-section">
+            <h2>游戏列表</h2>
+            <div class="games-grid">
+                <div class="game-card" onclick="playGame('space-rift.html')">
+                    <div class="card-preview game-1">
+                        <div class="card-icon">🌀</div>
+                    </div>
+                    <div class="card-content">
+                        <div class="card-title">
+                            时空裂缝
+                            <span class="tag tag-single">单机</span>
+                        </div>
+                        <p class="card-desc">
+                            点击裂缝，阻止它们吞噬世界！不断升级技能，挑战更高难度。
+                        </p>
+                        <div class="card-footer">
+                            <div class="card-stats">
+                                <span>🕹️ 点击</span>
+                                <span>⭐ 闯关</span>
+                            </div>
+                            <button class="play-btn">开始游戏</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="game-card" onclick="playMultiplayer()">
+                    <div class="card-preview game-2">
+                        <div class="card-icon">⚡</div>
+                    </div>
+                    <div class="card-content">
+                        <div class="card-title">
+                            天赫气死你
+                            <span class="tag tag-multi">多人</span>
+                        </div>
+                        <p class="card-desc">
+                            多人在线射击游戏！创建或加入房间，与好友一起组队消灭敌人。
+                        </p>
+                        <div class="card-footer">
+                            <div class="card-stats">
+                                <span>🔫 射击</span>
+                                <span>👥 多人</span>
+                            </div>
+                            <button class="play-btn">开始游戏</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2026 游戏大厅 - 让游戏更简单</p>
+    </footer>
+
+    <script>
+        function createStars() {
+            const container = document.getElementById('stars');
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.cssText = `
+                    left: ${Math.random() * 100}%;
+                    top: ${Math.random() * 100}%;
+                    width: ${Math.random() * 2 + 1}px;
+                    height: ${Math.random() * 2 + 1}px;
+                    animation-delay: ${Math.random() * 3}s;
+                `;
+                container.appendChild(star);
+            }
+        }
+        createStars();
+
+        function playGame(url) {
+            window.location.href = url;
+        }
+
+        function playMultiplayer() {
+            // 跳转到多人游戏页面
+            window.location.href = 'multiplayer.html';
+        }
+    </script>
+</body>
+</html>
